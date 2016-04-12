@@ -1,4 +1,4 @@
-import * as Radical from '../../dist/radical.js';
+import * as Radical from 'radical';
 import * as Redux from 'redux';
 
 class TodoApi extends Radical.Namespace {

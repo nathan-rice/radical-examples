@@ -1,5 +1,3 @@
-/// <reference path="../../typings/main.d.ts" />
-
 import {todo, TodoEntry} from './api';
 import * as React from 'react';
 import * as ReactRedux from 'react-redux';
@@ -65,20 +63,20 @@ function filterLinkConnector(state, ownProps: IFilterLinkProps) {
     return {active: ownProps.filter == todo.getFilter()};
 }
 
-@ReactRedux.connect(filterLinkConnector)
-class FilterLink extends React.Component<IFilterLinkProps, any> {
-    onClick(e) {
-        e.preventDefault();
-        todo.setFilter(this.props.filter);
-    }
+// Workaround for broken React-Redux typings
+const connectFilterLink = (filterLinkClass: any): any => ReactRedux.connect(filterLinkConnector)(filterLinkClass);
 
+@connectFilterLink
+class FilterLink extends React.Component<IFilterLinkProps, any> {
     render() {
         if (this.props.active) {
             return <span>{this.props.children}</span>
         }
 
         return (
-            <a href="#" onClick={this.onClick}>{this.props.children}</a>
+            <a href="#" onClick={e => {e.preventDefault(); todo.setFilter(this.props.filter)}}>
+                {this.props.children}
+            </a>
         )
     }
 }
@@ -109,7 +107,10 @@ function todoListConnector() {
     return {todos: todo.getTodos()}
 }
 
-@ReactRedux.connect(todoListConnector)
+// Workaround for broken React-Redux typings
+const connectTodoList = (todoClass: any): any => ReactRedux.connect(todoListConnector)(todoClass);
+
+@connectTodoList
 class TodoList extends React.Component<ITodoListProps, any> {
     render() {
         return (

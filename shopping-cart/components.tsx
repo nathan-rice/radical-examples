@@ -1,12 +1,13 @@
 import * as api from './api';
 import * as React from 'react';
+import * as ReactRedux from 'react-redux';
 
 export const App = ({}) => {
     return (
       <div>
         <h2>Shopping Cart Example</h2>
         <hr/>
-        <ProductsContainer />
+        <ProductsContainer products={api.webStore.inventory.getProducts()} />
         <hr/>
         <CartContainer />
       </div>
@@ -14,8 +15,8 @@ export const App = ({}) => {
 };
 
 interface IProductsContainerProps {
-  products: api.Product[];
-  addToCart: Function;
+  products?: api.Product[];
+  addToCart?: Function;
 }
 
 class ProductsContainer extends React.Component<IProductsContainerProps, any> {
@@ -29,6 +30,25 @@ class ProductsContainer extends React.Component<IProductsContainerProps, any> {
             onAddToCartClicked={() => api.webStore.shoppingCart.addToCart(product.id)} />
         )}
       </ProductsList>
+    )
+  }
+}
+
+interface ICartContainerProps {
+  products?: api.Product[];
+  total?: string;
+  checkout?: Function;
+}
+
+class CartContainer extends React.Component<ICartContainerProps, any> {
+  render() {
+    const { products, total } = this.props;
+
+    return (
+      <Cart
+        products={products}
+        total={total}
+        onCheckoutClicked={() => api.webStore.shoppingCart.checkout()} />
     )
   }
 }

@@ -10,7 +10,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var api_1 = require('./api');
+var api = require('./api');
 var React = require('react');
 var ReactRedux = require('react-redux');
 exports.App = function () { return (React.createElement("div", null, React.createElement(AddTodo, null), React.createElement(TodoList, null), React.createElement(Footer, null))); };
@@ -23,7 +23,7 @@ var AddTodo = (function (_super) {
         var trimmed, el = document.getElementById("todo-text");
         e.preventDefault();
         if (trimmed = el.value.trim()) {
-            api_1.todo.addTodo(trimmed);
+            api.todo.addTodo(trimmed);
             el.value = '';
         }
     };
@@ -32,9 +32,9 @@ var AddTodo = (function (_super) {
     };
     return AddTodo;
 }(React.Component));
-var Footer = function () { return (React.createElement("p", null, "Show:", " ", React.createElement(FilterLink, {filter: api_1.todo.filters.all}, "All"), ", ", React.createElement(FilterLink, {filter: api_1.todo.filters.active}, "Active"), ", ", React.createElement(FilterLink, {filter: api_1.todo.filters.completed}, "Completed"))); };
+var Footer = function () { return (React.createElement("p", null, "Show:", " ", React.createElement(FilterLink, {filter: api.todo.filters.all}, "All"), ", ", React.createElement(FilterLink, {filter: api.todo.filters.active}, "Active"), ", ", React.createElement(FilterLink, {filter: api.todo.filters.completed}, "Completed"))); };
 function filterLinkConnector(state, ownProps) {
-    return { active: ownProps.filter == api_1.todo.getFilter() };
+    return { active: ownProps.filter == api.todo.getFilter() };
 }
 var connectFilterLink = function (filterLinkClass) { return ReactRedux.connect(filterLinkConnector)(filterLinkClass); };
 var FilterLink = (function (_super) {
@@ -47,7 +47,7 @@ var FilterLink = (function (_super) {
         if (this.props.active) {
             return React.createElement("span", null, this.props.children);
         }
-        return (React.createElement("a", {href: "#", onClick: function (e) { e.preventDefault(); api_1.todo.setFilter(_this.props.filter); }}, this.props.children));
+        return (React.createElement("a", {href: "#", onClick: function (e) { e.preventDefault(); api.todo.setFilter(_this.props.filter); }}, this.props.children));
     };
     FilterLink = __decorate([
         connectFilterLink
@@ -68,7 +68,7 @@ var Todo = (function (_super) {
 }(React.Component));
 exports.Todo = Todo;
 function todoListConnector() {
-    return { todos: api_1.todo.getTodos() };
+    return { todos: api.todo.getTodos() };
 }
 var connectTodoList = function (todoClass) { return ReactRedux.connect(todoListConnector)(todoClass); };
 var TodoList = (function (_super) {
@@ -77,9 +77,8 @@ var TodoList = (function (_super) {
         _super.apply(this, arguments);
     }
     TodoList.prototype.render = function () {
-        var _this = this;
         return (React.createElement("ul", null, this.props.todos.map(function (todo) {
-            return React.createElement(Todo, {key: todo.id, todo: todo, onClick: function () { return _this.props.onTodoClick(todo.id); }});
+            return React.createElement(Todo, {key: todo.id, todo: todo, onClick: function () { return api.todo.toggleTodoCompleted(todo); }});
         })));
     };
     TodoList = __decorate([

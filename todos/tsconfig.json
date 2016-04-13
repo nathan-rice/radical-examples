@@ -7,7 +7,6 @@
     "experimentalDecorators": true
   },
   "files": [
-    "../node_modules/radical/dist/radical.d.ts",
     "api.ts",
     "components.tsx",
     "main.tsx",

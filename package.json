@@ -26,6 +26,7 @@
     "karma-commonjs": "0.0.13",
     "karma-jasmine": "^0.3.8",
     "karma-webpack": "^1.7.0",
+    "radical": "^0.1.5",
     "react": "^15.0.1",
     "react-dom": "^15.0.1",
     "react-redux": "^4.4.2",

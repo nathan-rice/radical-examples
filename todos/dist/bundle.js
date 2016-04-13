@@ -48,8 +48,8 @@
 	var React = __webpack_require__(1);
 	var react_dom_1 = __webpack_require__(32);
 	var react_redux_1 = __webpack_require__(166);
-	var api_1 = __webpack_require__(189);
-	var components_1 = __webpack_require__(191);
+	var api_1 = __webpack_require__(190);
+	var components_1 = __webpack_require__(192);
 	react_dom_1.render(React.createElement(react_redux_1.Provider, {store: api_1.store}, React.createElement(components_1.App, null)), document.getElementById("root"));
 
 
@@ -20021,7 +20021,7 @@
 
 	var _Provider2 = _interopRequireDefault(_Provider);
 
-	var _connect = __webpack_require__(169);
+	var _connect = __webpack_require__(170);
 
 	var _connect2 = _interopRequireDefault(_connect);
 
@@ -20045,6 +20045,10 @@
 
 	var _storeShape2 = _interopRequireDefault(_storeShape);
 
+	var _warning = __webpack_require__(169);
+
+	var _warning2 = _interopRequireDefault(_warning);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -20062,7 +20066,7 @@
 
 	  /* eslint-disable no-console */
 	  if (typeof console !== 'undefined' && typeof console.error === 'function') {
-	    console.error('<Provider> does not support changing `store` on the fly. ' + 'It is most likely that you see this error because you updated to ' + 'Redux 2.x and React Redux 2.x which no longer hot reload reducers ' + 'automatically. See https://github.com/reactjs/react-redux/releases/' + 'tag/v2.0.0 for the migration instructions.');
+	    (0, _warning2["default"])('<Provider> does not support changing `store` on the fly. ' + 'It is most likely that you see this error because you updated to ' + 'Redux 2.x and React Redux 2.x which no longer hot reload reducers ' + 'automatically. See https://github.com/reactjs/react-redux/releases/' + 'tag/v2.0.0 for the migration instructions.');
 	  }
 	  /* eslint-disable no-console */
 	}
@@ -20132,6 +20136,35 @@
 
 /***/ },
 /* 169 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	exports.__esModule = true;
+	exports["default"] = warning;
+	/**
+	 * Prints a warning in the console if it exists.
+	 *
+	 * @param {String} message The warning message.
+	 * @returns {void}
+	 */
+	function warning(message) {
+	  /* eslint-disable no-console */
+	  if (typeof console !== 'undefined' && typeof console.error === 'function') {
+	    console.error(message);
+	  }
+	  /* eslint-enable no-console */
+	  try {
+	    // This error was thrown as a convenience so that you can use this stack
+	    // to find the callsite that caused this warning to fire.
+	    throw new Error(message);
+	    /* eslint-disable no-empty */
+	  } catch (e) {}
+	  /* eslint-enable no-empty */
+	}
+
+/***/ },
+/* 170 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {'use strict';
@@ -20147,23 +20180,27 @@
 
 	var _storeShape2 = _interopRequireDefault(_storeShape);
 
-	var _shallowEqual = __webpack_require__(170);
+	var _shallowEqual = __webpack_require__(171);
 
 	var _shallowEqual2 = _interopRequireDefault(_shallowEqual);
 
-	var _wrapActionCreators = __webpack_require__(171);
+	var _wrapActionCreators = __webpack_require__(172);
 
 	var _wrapActionCreators2 = _interopRequireDefault(_wrapActionCreators);
 
-	var _isPlainObject = __webpack_require__(183);
+	var _warning = __webpack_require__(169);
+
+	var _warning2 = _interopRequireDefault(_warning);
+
+	var _isPlainObject = __webpack_require__(184);
 
 	var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
 
-	var _hoistNonReactStatics = __webpack_require__(187);
+	var _hoistNonReactStatics = __webpack_require__(188);
 
 	var _hoistNonReactStatics2 = _interopRequireDefault(_hoistNonReactStatics);
 
-	var _invariant = __webpack_require__(188);
+	var _invariant = __webpack_require__(189);
 
 	var _invariant2 = _interopRequireDefault(_invariant);
 
@@ -20189,11 +20226,6 @@
 	  return WrappedComponent.displayName || WrappedComponent.name || 'Component';
 	}
 
-	function checkStateShape(stateProps, dispatch) {
-	  (0, _invariant2["default"])((0, _isPlainObject2["default"])(stateProps), '`%sToProps` must return an object. Instead received %s.', dispatch ? 'mapDispatch' : 'mapState', stateProps);
-	  return stateProps;
-	}
-
 	// Helps track hot reloading.
 	var nextVersion = 0;
 
@@ -20202,7 +20234,15 @@
 
 	  var shouldSubscribe = Boolean(mapStateToProps);
 	  var mapState = mapStateToProps || defaultMapStateToProps;
-	  var mapDispatch = (0, _isPlainObject2["default"])(mapDispatchToProps) ? (0, _wrapActionCreators2["default"])(mapDispatchToProps) : mapDispatchToProps || defaultMapDispatchToProps;
+
+	  var mapDispatch = undefined;
+	  if (typeof mapDispatchToProps === 'function') {
+	    mapDispatch = mapDispatchToProps;
+	  } else if (!mapDispatchToProps) {
+	    mapDispatch = defaultMapDispatchToProps;
+	  } else {
+	    mapDispatch = (0, _wrapActionCreators2["default"])(mapDispatchToProps);
+	  }
 
 	  var finalMergeProps = mergeProps || defaultMergeProps;
 	  var _options$pure = options.pure;
@@ -20215,13 +20255,23 @@
 	  // Helps track hot reloading.
 	  var version = nextVersion++;
 
-	  function computeMergedProps(stateProps, dispatchProps, parentProps) {
-	    var mergedProps = finalMergeProps(stateProps, dispatchProps, parentProps);
-	    (0, _invariant2["default"])((0, _isPlainObject2["default"])(mergedProps), '`mergeProps` must return an object. Instead received %s.', mergedProps);
-	    return mergedProps;
-	  }
-
 	  return function wrapWithConnect(WrappedComponent) {
+	    var connectDisplayName = 'Connect(' + getDisplayName(WrappedComponent) + ')';
+
+	    function checkStateShape(props, methodName) {
+	      if (!(0, _isPlainObject2["default"])(props)) {
+	        (0, _warning2["default"])(methodName + '() in ' + connectDisplayName + ' must return a plain object. ' + ('Instead received ' + props + '.'));
+	      }
+	    }
+
+	    function computeMergedProps(stateProps, dispatchProps, parentProps) {
+	      var mergedProps = finalMergeProps(stateProps, dispatchProps, parentProps);
+	      if (process.env.NODE_ENV !== 'production') {
+	        checkStateShape(mergedProps, 'mergeProps');
+	      }
+	      return mergedProps;
+	    }
+
 	    var Connect = function (_Component) {
 	      _inherits(Connect, _Component);
 
@@ -20237,7 +20287,7 @@
 	        _this.version = version;
 	        _this.store = props.store || context.store;
 
-	        (0, _invariant2["default"])(_this.store, 'Could not find "store" in either the context or ' + ('props of "' + _this.constructor.displayName + '". ') + 'Either wrap the root component in a <Provider>, ' + ('or explicitly pass "store" as a prop to "' + _this.constructor.displayName + '".'));
+	        (0, _invariant2["default"])(_this.store, 'Could not find "store" in either the context or ' + ('props of "' + connectDisplayName + '". ') + 'Either wrap the root component in a <Provider>, ' + ('or explicitly pass "store" as a prop to "' + connectDisplayName + '".'));
 
 	        var storeState = _this.store.getState();
 	        _this.state = { storeState: storeState };
@@ -20253,7 +20303,10 @@
 	        var state = store.getState();
 	        var stateProps = this.doStatePropsDependOnOwnProps ? this.finalMapStateToProps(state, props) : this.finalMapStateToProps(state);
 
-	        return checkStateShape(stateProps);
+	        if (process.env.NODE_ENV !== 'production') {
+	          checkStateShape(stateProps, 'mapStateToProps');
+	        }
+	        return stateProps;
 	      };
 
 	      Connect.prototype.configureFinalMapState = function configureFinalMapState(store, props) {
@@ -20263,7 +20316,14 @@
 	        this.finalMapStateToProps = isFactory ? mappedState : mapState;
 	        this.doStatePropsDependOnOwnProps = this.finalMapStateToProps.length !== 1;
 
-	        return isFactory ? this.computeStateProps(store, props) : checkStateShape(mappedState);
+	        if (isFactory) {
+	          return this.computeStateProps(store, props);
+	        }
+
+	        if (process.env.NODE_ENV !== 'production') {
+	          checkStateShape(mappedState, 'mapStateToProps');
+	        }
+	        return mappedState;
 	      };
 
 	      Connect.prototype.computeDispatchProps = function computeDispatchProps(store, props) {
@@ -20275,7 +20335,10 @@
 
 	        var dispatchProps = this.doDispatchPropsDependOnOwnProps ? this.finalMapDispatchToProps(dispatch, props) : this.finalMapDispatchToProps(dispatch);
 
-	        return checkStateShape(dispatchProps, true);
+	        if (process.env.NODE_ENV !== 'production') {
+	          checkStateShape(dispatchProps, 'mapDispatchToProps');
+	        }
+	        return dispatchProps;
 	      };
 
 	      Connect.prototype.configureFinalMapDispatch = function configureFinalMapDispatch(store, props) {
@@ -20285,7 +20348,14 @@
 	        this.finalMapDispatchToProps = isFactory ? mappedDispatch : mapDispatch;
 	        this.doDispatchPropsDependOnOwnProps = this.finalMapDispatchToProps.length !== 1;
 
-	        return isFactory ? this.computeDispatchProps(store, props) : checkStateShape(mappedDispatch, true);
+	        if (isFactory) {
+	          return this.computeDispatchProps(store, props);
+	        }
+
+	        if (process.env.NODE_ENV !== 'production') {
+	          checkStateShape(mappedDispatch, 'mapDispatchToProps');
+	        }
+	        return mappedDispatch;
 	      };
 
 	      Connect.prototype.updateStatePropsIfNeeded = function updateStatePropsIfNeeded() {
@@ -20357,6 +20427,7 @@
 	        this.mergedProps = null;
 	        this.haveOwnPropsChanged = true;
 	        this.hasStoreStateChanged = true;
+	        this.haveStatePropsBeenPrecalculated = false;
 	        this.renderedElement = null;
 	        this.finalMapDispatchToProps = null;
 	        this.finalMapStateToProps = null;
@@ -20367,13 +20438,21 @@
 	          return;
 	        }
 
-	        var prevStoreState = this.state.storeState;
 	        var storeState = this.store.getState();
-
-	        if (!pure || prevStoreState !== storeState) {
-	          this.hasStoreStateChanged = true;
-	          this.setState({ storeState: storeState });
+	        var prevStoreState = this.state.storeState;
+	        if (pure && prevStoreState === storeState) {
+	          return;
 	        }
+
+	        if (pure && !this.doStatePropsDependOnOwnProps) {
+	          if (!this.updateStatePropsIfNeeded()) {
+	            return;
+	          }
+	          this.haveStatePropsBeenPrecalculated = true;
+	        }
+
+	        this.hasStoreStateChanged = true;
+	        this.setState({ storeState: storeState });
 	      };
 
 	      Connect.prototype.getWrappedInstance = function getWrappedInstance() {
@@ -20385,10 +20464,12 @@
 	      Connect.prototype.render = function render() {
 	        var haveOwnPropsChanged = this.haveOwnPropsChanged;
 	        var hasStoreStateChanged = this.hasStoreStateChanged;
+	        var haveStatePropsBeenPrecalculated = this.haveStatePropsBeenPrecalculated;
 	        var renderedElement = this.renderedElement;
 
 	        this.haveOwnPropsChanged = false;
 	        this.hasStoreStateChanged = false;
+	        this.haveStatePropsBeenPrecalculated = false;
 
 	        var shouldUpdateStateProps = true;
 	        var shouldUpdateDispatchProps = true;
@@ -20399,7 +20480,9 @@
 
 	        var haveStatePropsChanged = false;
 	        var haveDispatchPropsChanged = false;
-	        if (shouldUpdateStateProps) {
+	        if (haveStatePropsBeenPrecalculated) {
+	          haveStatePropsChanged = true;
+	        } else if (shouldUpdateStateProps) {
 	          haveStatePropsChanged = this.updateStatePropsIfNeeded();
 	        }
 	        if (shouldUpdateDispatchProps) {
@@ -20431,7 +20514,7 @@
 	      return Connect;
 	    }(_react.Component);
 
-	    Connect.displayName = 'Connect(' + getDisplayName(WrappedComponent) + ')';
+	    Connect.displayName = connectDisplayName;
 	    Connect.WrappedComponent = WrappedComponent;
 	    Connect.contextTypes = {
 	      store: _storeShape2["default"]
@@ -20459,7 +20542,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 170 */
+/* 171 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -20490,7 +20573,7 @@
 	}
 
 /***/ },
-/* 171 */
+/* 172 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -20498,7 +20581,7 @@
 	exports.__esModule = true;
 	exports["default"] = wrapActionCreators;
 
-	var _redux = __webpack_require__(172);
+	var _redux = __webpack_require__(173);
 
 	function wrapActionCreators(actionCreators) {
 	  return function (dispatch) {
@@ -20507,7 +20590,7 @@
 	}
 
 /***/ },
-/* 172 */
+/* 173 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {'use strict';
@@ -20515,27 +20598,27 @@
 	exports.__esModule = true;
 	exports.compose = exports.applyMiddleware = exports.bindActionCreators = exports.combineReducers = exports.createStore = undefined;
 
-	var _createStore = __webpack_require__(173);
+	var _createStore = __webpack_require__(174);
 
 	var _createStore2 = _interopRequireDefault(_createStore);
 
-	var _combineReducers = __webpack_require__(178);
+	var _combineReducers = __webpack_require__(179);
 
 	var _combineReducers2 = _interopRequireDefault(_combineReducers);
 
-	var _bindActionCreators = __webpack_require__(180);
+	var _bindActionCreators = __webpack_require__(181);
 
 	var _bindActionCreators2 = _interopRequireDefault(_bindActionCreators);
 
-	var _applyMiddleware = __webpack_require__(181);
+	var _applyMiddleware = __webpack_require__(182);
 
 	var _applyMiddleware2 = _interopRequireDefault(_applyMiddleware);
 
-	var _compose = __webpack_require__(182);
+	var _compose = __webpack_require__(183);
 
 	var _compose2 = _interopRequireDefault(_compose);
 
-	var _warning = __webpack_require__(179);
+	var _warning = __webpack_require__(180);
 
 	var _warning2 = _interopRequireDefault(_warning);
 
@@ -20559,7 +20642,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 173 */
+/* 174 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -20568,7 +20651,7 @@
 	exports.ActionTypes = undefined;
 	exports["default"] = createStore;
 
-	var _isPlainObject = __webpack_require__(174);
+	var _isPlainObject = __webpack_require__(175);
 
 	var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
 
@@ -20780,12 +20863,12 @@
 	}
 
 /***/ },
-/* 174 */
+/* 175 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var getPrototype = __webpack_require__(175),
-	    isHostObject = __webpack_require__(176),
-	    isObjectLike = __webpack_require__(177);
+	var getPrototype = __webpack_require__(176),
+	    isHostObject = __webpack_require__(177),
+	    isObjectLike = __webpack_require__(178);
 
 	/** `Object#toString` result references. */
 	var objectTag = '[object Object]';
@@ -20856,7 +20939,7 @@
 
 
 /***/ },
-/* 175 */
+/* 176 */
 /***/ function(module, exports) {
 
 	/* Built-in method references for those with the same name as other `lodash` methods. */
@@ -20877,7 +20960,7 @@
 
 
 /***/ },
-/* 176 */
+/* 177 */
 /***/ function(module, exports) {
 
 	/**
@@ -20903,7 +20986,7 @@
 
 
 /***/ },
-/* 177 */
+/* 178 */
 /***/ function(module, exports) {
 
 	/**
@@ -20938,7 +21021,7 @@
 
 
 /***/ },
-/* 178 */
+/* 179 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {'use strict';
@@ -20946,13 +21029,13 @@
 	exports.__esModule = true;
 	exports["default"] = combineReducers;
 
-	var _createStore = __webpack_require__(173);
+	var _createStore = __webpack_require__(174);
 
-	var _isPlainObject = __webpack_require__(174);
+	var _isPlainObject = __webpack_require__(175);
 
 	var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
 
-	var _warning = __webpack_require__(179);
+	var _warning = __webpack_require__(180);
 
 	var _warning2 = _interopRequireDefault(_warning);
 
@@ -21071,7 +21154,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 179 */
+/* 180 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21100,7 +21183,7 @@
 	}
 
 /***/ },
-/* 180 */
+/* 181 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21156,7 +21239,7 @@
 	}
 
 /***/ },
-/* 181 */
+/* 182 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -21167,7 +21250,7 @@
 
 	exports["default"] = applyMiddleware;
 
-	var _compose = __webpack_require__(182);
+	var _compose = __webpack_require__(183);
 
 	var _compose2 = _interopRequireDefault(_compose);
 
@@ -21219,7 +21302,7 @@
 	}
 
 /***/ },
-/* 182 */
+/* 183 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -21257,12 +21340,12 @@
 	}
 
 /***/ },
-/* 183 */
+/* 184 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var getPrototype = __webpack_require__(184),
-	    isHostObject = __webpack_require__(185),
-	    isObjectLike = __webpack_require__(186);
+	var getPrototype = __webpack_require__(185),
+	    isHostObject = __webpack_require__(186),
+	    isObjectLike = __webpack_require__(187);
 
 	/** `Object#toString` result references. */
 	var objectTag = '[object Object]';
@@ -21333,7 +21416,7 @@
 
 
 /***/ },
-/* 184 */
+/* 185 */
 /***/ function(module, exports) {
 
 	/* Built-in method references for those with the same name as other `lodash` methods. */
@@ -21354,7 +21437,7 @@
 
 
 /***/ },
-/* 185 */
+/* 186 */
 /***/ function(module, exports) {
 
 	/**
@@ -21380,7 +21463,7 @@
 
 
 /***/ },
-/* 186 */
+/* 187 */
 /***/ function(module, exports) {
 
 	/**
@@ -21415,7 +21498,7 @@
 
 
 /***/ },
-/* 187 */
+/* 188 */
 /***/ function(module, exports) {
 
 	/**
@@ -21461,7 +21544,7 @@
 
 
 /***/ },
-/* 188 */
+/* 189 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/**
@@ -21519,7 +21602,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 189 */
+/* 190 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -21528,8 +21611,8 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Radical = __webpack_require__(190);
-	var Redux = __webpack_require__(172);
+	var Radical = __webpack_require__(191);
+	var Redux = __webpack_require__(173);
 	var TodoApi = (function (_super) {
 	    __extends(TodoApi, _super);
 	    function TodoApi() {
@@ -21573,8 +21656,7 @@
 	            }
 	        });
 	        this.setFilter = Radical.Action.create(function (action, filter) {
-	            var reduxAction = { todoFilter: filter };
-	            return action.dispatch(reduxAction);
+	            return action.dispatch({ todoFilter: filter });
 	        });
 	    }
 	    TodoApi.prototype.getTodos = function () {
@@ -21604,7 +21686,7 @@
 
 
 /***/ },
-/* 190 */
+/* 191 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -21774,8 +21856,6 @@
 	            if (config.name)
 	                this.name = config.name;
 	        }
-	        if (!this.name)
-	            this.name = this.constructor.name;
 	        return this;
 	    };
 	    ApiComponent.create = function (config) {
@@ -21911,8 +21991,16 @@
 	            }
 	        };
 	    }
+	    Namespace.prototype.nameSelf = function () {
+	        if (this.constructor == Namespace) {
+	            throw new Error("Automatic Namespace naming is only supported for derived classes; you must specify a value for the name attribute");
+	        }
+	        this.name = this.constructor.name;
+	    };
 	    Namespace.prototype.configure = function (config) {
 	        _super.prototype.configure.call(this, config);
+	        if (!this.name)
+	            this.nameSelf();
 	        var key;
 	        for (key in this) {
 	            if (this[key] instanceof ApiComponent && !this.mountLocation(this[key]))
@@ -22043,6 +22131,12 @@
 	        else
 	            return state;
 	    };
+	    CollectionNamespace.prototype.nameSelf = function () {
+	        if (this.constructor == CollectionNamespace) {
+	            throw new Error("Automatic Namespace naming is only supported for derived classes; you must specify a value for the name attribute");
+	        }
+	        this.name = this.constructor.name;
+	    };
 	    CollectionNamespace.prototype.updateDefaultState = function (stateLocation, state) {
 	        if (stateLocation) {
 	            this.defaultState = this.defaultState.set(stateLocation, state);
@@ -22058,7 +22152,7 @@
 	//# sourceMappingURL=radical.js.map
 
 /***/ },
-/* 191 */
+/* 192 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -22073,7 +22167,7 @@
 	    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
 	    return c > 3 && r && Object.defineProperty(target, key, r), r;
 	};
-	var api_1 = __webpack_require__(189);
+	var api = __webpack_require__(190);
 	var React = __webpack_require__(1);
 	var ReactRedux = __webpack_require__(166);
 	exports.App = function () { return (React.createElement("div", null, React.createElement(AddTodo, null), React.createElement(TodoList, null), React.createElement(Footer, null))); };
@@ -22086,7 +22180,7 @@
 	        var trimmed, el = document.getElementById("todo-text");
 	        e.preventDefault();
 	        if (trimmed = el.value.trim()) {
-	            api_1.todo.addTodo(trimmed);
+	            api.todo.addTodo(trimmed);
 	            el.value = '';
 	        }
 	    };
@@ -22095,9 +22189,9 @@
 	    };
 	    return AddTodo;
 	}(React.Component));
-	var Footer = function () { return (React.createElement("p", null, "Show:", " ", React.createElement(FilterLink, {filter: api_1.todo.filters.all}, "All"), ", ", React.createElement(FilterLink, {filter: api_1.todo.filters.active}, "Active"), ", ", React.createElement(FilterLink, {filter: api_1.todo.filters.completed}, "Completed"))); };
+	var Footer = function () { return (React.createElement("p", null, "Show:", " ", React.createElement(FilterLink, {filter: api.todo.filters.all}, "All"), ", ", React.createElement(FilterLink, {filter: api.todo.filters.active}, "Active"), ", ", React.createElement(FilterLink, {filter: api.todo.filters.completed}, "Completed"))); };
 	function filterLinkConnector(state, ownProps) {
-	    return { active: ownProps.filter == api_1.todo.getFilter() };
+	    return { active: ownProps.filter == api.todo.getFilter() };
 	}
 	var connectFilterLink = function (filterLinkClass) { return ReactRedux.connect(filterLinkConnector)(filterLinkClass); };
 	var FilterLink = (function (_super) {
@@ -22110,7 +22204,7 @@
 	        if (this.props.active) {
 	            return React.createElement("span", null, this.props.children);
 	        }
-	        return (React.createElement("a", {href: "#", onClick: function (e) { e.preventDefault(); api_1.todo.setFilter(_this.props.filter); }}, this.props.children));
+	        return (React.createElement("a", {href: "#", onClick: function (e) { e.preventDefault(); api.todo.setFilter(_this.props.filter); }}, this.props.children));
 	    };
 	    FilterLink = __decorate([
 	        connectFilterLink
@@ -22131,7 +22225,7 @@
 	}(React.Component));
 	exports.Todo = Todo;
 	function todoListConnector() {
-	    return { todos: api_1.todo.getTodos() };
+	    return { todos: api.todo.getTodos() };
 	}
 	var connectTodoList = function (todoClass) { return ReactRedux.connect(todoListConnector)(todoClass); };
 	var TodoList = (function (_super) {
@@ -22140,9 +22234,8 @@
 	        _super.apply(this, arguments);
 	    }
 	    TodoList.prototype.render = function () {
-	        var _this = this;
 	        return (React.createElement("ul", null, this.props.todos.map(function (todo) {
-	            return React.createElement(Todo, {key: todo.id, todo: todo, onClick: function () { return _this.props.onTodoClick(todo.id); }});
+	            return React.createElement(Todo, {key: todo.id, todo: todo, onClick: function () { return api.todo.toggleTodoCompleted(todo); }});
 	        })));
 	    };
 	    TodoList = __decorate([

@@ -1,4 +1,4 @@
-import {todo, TodoEntry} from './api';
+import * as api from './api';
 import * as React from 'react';
 import * as ReactRedux from 'react-redux';
 
@@ -16,7 +16,7 @@ class AddTodo extends React.Component<any, any> {
         let trimmed, el = document.getElementById("todo-text") as HTMLInputElement;
         e.preventDefault();
         if (trimmed = el.value.trim()) {
-            todo.addTodo(trimmed);
+            api.todo.addTodo(trimmed);
             el.value = '';
         }
     }
@@ -39,15 +39,15 @@ const Footer = () => (
     <p>
         Show:
         {" "}
-        <FilterLink filter={todo.filters.all}>
+        <FilterLink filter={api.todo.filters.all}>
             All
         </FilterLink>
         {", "}
-        <FilterLink filter={todo.filters.active}>
+        <FilterLink filter={api.todo.filters.active}>
             Active
         </FilterLink>
         {", "}
-        <FilterLink filter={todo.filters.completed}>
+        <FilterLink filter={api.todo.filters.completed}>
             Completed
         </FilterLink>
     </p>
@@ -60,7 +60,7 @@ interface IFilterLinkProps {
 }
 
 function filterLinkConnector(state, ownProps: IFilterLinkProps) {
-    return {active: ownProps.filter == todo.getFilter()};
+    return {active: ownProps.filter == api.todo.getFilter()};
 }
 
 // Workaround for broken React-Redux typings
@@ -74,7 +74,7 @@ class FilterLink extends React.Component<IFilterLinkProps, any> {
         }
 
         return (
-            <a href="#" onClick={e => {e.preventDefault(); todo.setFilter(this.props.filter)}}>
+            <a href="#" onClick={e => {e.preventDefault(); api.todo.setFilter(this.props.filter)}}>
                 {this.props.children}
             </a>
         )
@@ -83,7 +83,7 @@ class FilterLink extends React.Component<IFilterLinkProps, any> {
 
 interface ITodoProps {
     onClick: Function;
-    todo: TodoEntry;
+    todo: api.TodoEntry;
 }
 
 export class Todo extends React.Component<ITodoProps, any> {
@@ -99,12 +99,12 @@ export class Todo extends React.Component<ITodoProps, any> {
 }
 
 interface ITodoListProps {
-    todos?: TodoEntry[];
+    todos?: api.TodoEntry[];
     onTodoClick?: Function;
 }
 
 function todoListConnector() {
-    return {todos: todo.getTodos()}
+    return {todos: api.todo.getTodos()}
 }
 
 // Workaround for broken React-Redux typings
@@ -116,7 +116,7 @@ class TodoList extends React.Component<ITodoListProps, any> {
         return (
             <ul>
                 {this.props.todos.map(todo =>
-                    <Todo key={todo.id} todo={todo} onClick={() => this.props.onTodoClick(todo.id)}/>
+                    <Todo key={todo.id} todo={todo} onClick={() => api.todo.toggleTodoCompleted(todo)}/>
                 )}
             </ul>
         )

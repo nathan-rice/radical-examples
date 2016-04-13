@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "sourceMap": true,
+    "removeComments": true,
+    "jsx": "react",
+    "experimentalDecorators": true
+  },
+  "files": [
+    "api.ts",
+    "components.tsx",
+    "main.tsx",
+    "../typings/main.d.ts"
+  ]
+}

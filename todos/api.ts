@@ -61,7 +61,7 @@ export class TodoEntry {
     constructor(public id: number, public text: string = "", public completed: boolean = false) {}
 }
 
-export var store = Redux.createStore(state => state);
-export var todo = TodoApi.create({getState: store.getState, dispatch: store.dispatch}) as TodoApi;
+export const store = Redux.createStore(state => state);
+export const todo = TodoApi.create({getState: store.getState, dispatch: store.dispatch}) as TodoApi;
 
 store.replaceReducer(todo.reduce);

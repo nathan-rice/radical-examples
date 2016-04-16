@@ -4,6 +4,8 @@ import * as ReactRedux from 'react-redux';
 
 export const App = () => (
     <div>
+        <h1>Todo list example</h1>
+        <hr/>
         <AddTodo />
         <TodoList />
         <Footer />

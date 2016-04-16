@@ -2,132 +2,114 @@ import * as Radical from 'radical';
 import * as Redux from 'redux';
 
 export class Product {
-    constructor(public title: string, public id: number) {}
+
+    static nextId = 0;
+    static getId() {
+        return this.nextId++;
+    }
+
+    constructor(public title: string, public price: number, public id: number = -1) {
+        if (id < 0) this.id = Product.getId();
+    }
 }
 
-export class ShoppingCartItem {
-    constructor(public product: Product, public price: number) {}
-}
-
-export class StoreContainerItem {
-    constructor(public product: Product, public price: number, public quantity: number = 1) {}
+interface StoreContainerState {
+    products: {[key: number]: Product};
+    quantities: {[key: number]: number};
 }
 
 class StoreContainer extends Radical.Namespace {
     
-    defaultState: {items:StoreContainerItem[]} = {items:[]};
-    
-    add = Radical.Action.create({
-        initiator: function (action, product: Product, price: number, quantity: number = 1) {
-            return action.dispatch({product, price, quantity});
-        },
-        reducer: function (state, action) {
-            
-            state.items = [...state.items, action.item];
-            return state;
-        }
-    });
+    defaultState: StoreContainerState = {products:{}, quantities: {}};
 
-    remove = Radical.Action.create({
-        initiator: function (action, product: Product, price: number, quantity: number = 1) {
-            action.dispatch({product, price, quantity});
-        },
-        reducer: function (state, action) {
-            state.items = state.items.filter(product => action.product != product);
-            return state;
-        }
-    });
+    add(product: Product, quantity: number = 1) {
+        let startingQuantity = this.getQuantity(product);
+        this.setQuantity(product, startingQuantity + quantity);
+        return this;
+    }
+
+    remove(product: Product, quantity: number = 1) {
+        let startingQuantity = this.getQuantity(product);
+        if (startingQuantity >= quantity) {
+            this.setQuantity(product, startingQuantity - quantity);
+            return true;
+        } else return false;
+    }
     
     list() {
-        return this.getState().items;
+        let state = this.getState(), quantities = state.quantities, products = [];
+        for (let key in quantities) {
+            if (quantities.hasOwnProperty(key) && quantities[key] > 0) {
+                products.push(state.products[key]);
+            }
+        }
+        return products;
     }
-    
+
     setQuantity = Radical.Action.create({
-        initiator: function (action, product, price) {
-            return action.dispatch({product, price});
+        initiator: function(action, product: Product, quantity: number) {
+            return action.dispatch({product, quantity});
         },
-        reducer: function (state, action) {
-            state.items = state.items.map(item => new StoreContainerItem(action.product, action.price))
+        reducer: function (state: StoreContainerState, action) {
+            let {product, quantity} = action;
+            if (!state.products[product.id]) {
+                state.products = Object.assign({[product.id]: product}, state.products);
+            }
+            state.quantities = Object.assign({}, state.quantities);
+            state.quantities[product.id] = quantity;
+            return state;
+        }
+    });
+
+    getQuantity(product: Product): number {
+        return this.getState().quantities[product.id] || 0;
+    }
+}
+
+class ShoppingCart extends StoreContainer {
+    checkout = Radical.Action.create({
+        reducer: function (state: StoreContainerState) {
+            state.products = {};
+            state.quantities = {};
+            return state;
         }
     });
     
-    containsItem(product: Product, price: number) {
-        return this.getState().items
-                .filter(item => item.product.id == product.id && item.price == price)
-                .length > 0;
-    }
-}
-
-class ShoppingCart extends Radical.Namespace {
-    defaultState: {items:ShoppingCartItem[]} = {items:[]};
-
-
-
-    checkout = Radical.Action.create({
-        reducer: function (state, action) {
-            state.items = [];
-            return state;
+    getTotal() {
+        let {quantities, products} = this.getState(), total = 0;
+        for (let key in quantities) {
+            if (quantities.hasOwnProperty(key)) total += quantities[key] * products[key].price
         }
-    });
-
-
-
-    getTotal = Radical.Action.create(function () {
-        let state = this.getState();
-        return state.items.reduce((total, item: ShoppingCartItem) => total + item.price, 0).toFixed(2);
-    });
-}
-
-class Inventory extends Radical.Namespace {
-    defaultState: {items: StoreContainerItem[]} = {items: []};
-
-    getItems() {
-        return this.getState().items;
+        return total.toFixed(2);
     };
-
-    addProduct = Radical.Action.create({
-        initiator: function(action, product: Product, price: number, quantity: number = 0) {
-            return action.dispatch({product: new StoreContainerItem(product, price, quantity)});
-        },
-        reducer: function(state, action) {
-            state.items = [...state.items, action.product];
-            return state;
-        }
-    });
-
-    isAvailable(product: Product): boolean {
-        let state = this.getState();
-        for (let i = 0; i < state.items.length; i++) {
-            let item = state.items[i];
-            if (product.id == item.product.id && item.quantity > 0) return true;
-        }
-        return false;
-    }
-
-    requestProduct = Radical.Action.create({
-        initiator: function (action, product: Product) {
-            if (this.isAvailable(product)) {
-                action.dispatch({product: product});
-                return true;
-            } else return false;
-        },
-        reducer: function (state, action: {type: string, product: Product}) {
-            state.items = state.items.map(item => {
-                if (item.product.id == action.product.id) {
-                    return new StoreContainerItem(item.product, item.price, item.quantity - 1);
-                } else return item;
-            });
-            return state;
-        }
-    })
 }
 
 class Store extends Radical.Namespace {
-    inventory = Inventory.create() as Inventory;
+    inventory = StoreContainer.create({name: "Inventory"}) as StoreContainer;
     shoppingCart = ShoppingCart.create() as ShoppingCart;
+    
+    order(product: Product, quantity: number = 1) {
+        if (this.inventory.remove(product, quantity)) {
+            this.shoppingCart.add(product, quantity);
+            return true;
+        } else return false;
+    }
+    
+    cancelOrder(product: Product, quantity: number = 1) {
+        if (this.shoppingCart.remove(product, quantity)) {
+            this.inventory.add(product, quantity);
+            return true;
+        } else return false;
+    }
 }
 
-export const store = Redux.createStore(state => state);
-export const webStore = Store.create({getState: store.getState, dispatch: store.dispatch}) as Store;
+var w = (window as any), devToolExtension = w.devToolsExtension ? w.devToolsExtension() : undefined;
+export const store = Redux.createStore(state => state, null, devToolExtension);
+export const webStore = Store.create({store: store}) as Store;
 
 store.replaceReducer(webStore.reduce);
+
+webStore.inventory
+    .add(new Product("Overpriced tablet", 500), 1)
+    .add(new Product("Kanye west plain white cotton shirt", 120), 5)
+    .add(new Product("Random artist's random album", 10), 10);

@@ -19,10 +19,14 @@ interface IProductsProps {
     products?: api.Product[];
 }
 
+/* Note here that I'm wiring the Products component directly to the API via React/Redux.
+ * I find this both conceptually clearer and more convenient.
+ */
 function productsLink() {
     return {products: api.webStore.inventory.list()}
 }
 
+// A small workaround for broken React/Redux typings.
 const productsLinkConnect = (productsClass: any): any => connect(productsLink)(productsClass);
 
 @productsLinkConnect
@@ -43,13 +47,14 @@ class Products extends React.Component<IProductsProps, any> {
 
 interface ICartProps {
     products?: api.Product[];
-    //total: number;
 }
 
+// Using the same React/Redux pattern
 function cartLink() {
     return {products: api.webStore.shoppingCart.list()}
 }
 
+// That workaround again
 const cartLinkConnect = (cartClass: any): any => connect(cartLink)(cartClass);
 
 @cartLinkConnect
@@ -62,6 +67,9 @@ export class Cart extends React.Component<ICartProps, any> {
             products.map(product => <CartItem key={product.id} product={product} />);
     }
     
+    /* Here we utilize the api directly.  Another option is to pass around the shoppingCart
+     * Namespace as a prop; that shifts coupling from the component itself to its parents.
+     */
     render() {
         return (
             <div>

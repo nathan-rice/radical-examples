@@ -3,7 +3,7 @@ import * as Redux from 'redux';
 
 export class Product {
 
-    static nextId = 0;
+    private static nextId = 0;
     static getId() {
         return this.nextId++;
     }
@@ -13,30 +13,42 @@ export class Product {
     }
 }
 
+/* This will represent the state object for both StoreContainer's defaultState, and for
+ * any reducers attached to StoreContainer
+ */
 interface StoreContainerState {
     products: {[key: number]: Product};
     quantities: {[key: number]: number};
 }
 
+/* Since our StoreContainers (the shopping cart and inventory) will group and provide state
+ * for a set of related Actions, they will be Namespaces.
+ */
 class StoreContainer extends Radical.Namespace {
     
+    // An empty object is assumed as the default if none is specified
     defaultState: StoreContainerState = {products:{}, quantities: {}};
 
+    // A convenience method wrapper around setQuantity
     add(product: Product, quantity: number = 1) {
         let startingQuantity = this.getQuantity(product);
-        this.setQuantity(product, startingQuantity + quantity);
-        return this;
+        // here we're calling the initiator function of the setQuantity Action
+        return this.setQuantity(product, startingQuantity + quantity);
     }
 
+    // Another convenience method wrapper around setQuantity
     remove(product: Product, quantity: number = 1) {
         let startingQuantity = this.getQuantity(product);
         if (startingQuantity >= quantity) {
+            // here we're calling the initiator function of the setQuantity Action
             this.setQuantity(product, startingQuantity - quantity);
             return true;
         } else return false;
     }
     
+    // get all the products in the container with a quantity of 1 or more
     list() {
+        // the Namespace's getState method gets local state automatically
         let state = this.getState(), quantities = state.quantities, products = [];
         for (let key in quantities) {
             if (quantities.hasOwnProperty(key) && quantities[key] > 0) {
@@ -46,10 +58,21 @@ class StoreContainer extends Radical.Namespace {
         return products;
     }
 
+    /* Here we're creating an Action for the first time.  Note that the create method is
+     * preferable to using new in most cases.
+     */
     setQuantity = Radical.Action.create({
+        /* This initiator doesn't do much, it could almost be replaced by the default
+         * initiator.  Note that the first argument to the initiator is the action itself.
+         * That argument is automatically bound to the current action, while this is
+         * bound to the parent Namespace.
+         */
         initiator: function(action, product: Product, quantity: number) {
             return action.dispatch({product, quantity});
         },
+        /* Notice this reducer only has to deal with a StoreContainerState object, and
+         * you can safely modify state directly, as it is a copy of the original.
+         */
         reducer: function (state: StoreContainerState, action) {
             let {product, quantity} = action;
             if (!state.products[product.id]) {
@@ -67,6 +90,7 @@ class StoreContainer extends Radical.Namespace {
 }
 
 class ShoppingCart extends StoreContainer {
+    // Since we don't need to pass anything here, the default initiator will be fine
     checkout = Radical.Action.create({
         reducer: function (state: StoreContainerState) {
             state.products = {};
@@ -84,10 +108,15 @@ class ShoppingCart extends StoreContainer {
     };
 }
 
+/* The inventory and shopping cart functionality has been defined, now there needs to 
+ * be something to tie everything together into a cohesive application.  Store will
+ * serve to provide the top level interface.
+ */
 class Store extends Radical.Namespace {
     inventory = StoreContainer.create({name: "Inventory"}) as StoreContainer;
     shoppingCart = ShoppingCart.create() as ShoppingCart;
     
+    // Move an item from inventory to the shopping cart
     order(product: Product, quantity: number = 1) {
         if (this.inventory.remove(product, quantity)) {
             this.shoppingCart.add(product, quantity);
@@ -95,6 +124,7 @@ class Store extends Radical.Namespace {
         } else return false;
     }
     
+    // Move an item from the shopping cart to inventory
     cancelOrder(product: Product, quantity: number = 1) {
         if (this.shoppingCart.remove(product, quantity)) {
             this.inventory.add(product, quantity);
@@ -103,13 +133,23 @@ class Store extends Radical.Namespace {
     }
 }
 
-var w = (window as any), devToolExtension = w.devToolsExtension ? w.devToolsExtension() : undefined;
+var w = (window as any),
+    devToolExtension = w.devToolsExtension ? w.devToolsExtension() : undefined;
+
 export const store = Redux.createStore(state => state, null, devToolExtension);
+
+// Once you have your Redux store, create a web Store and wire it in
 export const webStore = Store.create({store: store}) as Store;
 
+/* You can just use the top level Store's reduce function, it will dispatch
+ * relevant portions of the state tree to its children and their Actions.
+ * 
+ * Don't do this until you have completely configured your top-level Namespace.
+ */
 store.replaceReducer(webStore.reduce);
 
+// Now to give the people something to buy!
 webStore.inventory
-    .add(new Product("Overpriced tablet", 500), 1)
-    .add(new Product("Kanye west plain white cotton shirt", 120), 5)
-    .add(new Product("Random artist's random album", 10), 10);
+    .add(new Product("Tablet", 500), 1)
+    .add(new Product("Shirt", 20), 5)
+    .add(new Product("Album", 15), 10);
